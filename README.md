@@ -1,5 +1,108 @@
-# Welcome to GitHub Desktop!
+# TalkQuest 🎒
 
-This is your README. READMEs are where you can communicate what your project is and how to use it.
+**A screen-assisted developmental play companion for toddlers ages 1–4.**
 
-Write your name on line 6, save it, and then head back to GitHub Desktop.
+TalkQuest gives short, parent-guided missions that get little ones talking,
+moving, imitating, listening, and pretending — in the *real world*, not glued
+to a screen. An AI-style adventure guide named **Buddy** hands out one mission
+at a time; the parent helps, taps **Done**, and the child is celebrated.
+
+> 💛 **TalkQuest is a play and learning companion. It does not diagnose, treat,
+> or prevent autism or developmental delays. If you have concerns about your
+> child's development, consult a pediatrician or licensed specialist.**
+
+---
+
+## ✨ What it does
+
+- **Parent-controlled flow:** pick age → session length → adventure theme.
+- **One short mission at a time** with voice narration, big buttons, and a
+  small parent coaching tip.
+- **5 adventure themes:** Jungle Explorer, Ocean Adventure, Space Mission,
+  Animal Parade, Color Hunt.
+- **5 game modes:** Real World Treasure Hunt, Copy Me, Animal Adventure,
+  Emotion Play, Story Builder.
+- **104 built-in missions** structured by age group, theme, and skill category.
+- **Age-based difficulty:** simple one-step tasks for 1–2; colors/counting/naming
+  for 2–3; two-step instructions, shapes, counting to 5, memory & storytelling
+  for 3–4.
+- **Celebration** after every mission (confetti, badge, Buddy cheering, voice).
+- **Progress Summary** of skills practiced each session.
+- **Parent Dashboard:** sessions completed, words practiced, movement /
+  imitation / social activities, favorite theme, and weekly progress — framed as
+  *"skills practiced,"* never as a diagnosis.
+- **Local-first & private:** missions and progress live on-device
+  (AsyncStorage). No accounts, no ads, no network required.
+
+## 🗺️ Screens
+
+Welcome → Child Age Selection → Session Length → Adventure Theme → Mission →
+Celebration → Progress Summary, plus a Parent Dashboard and Settings.
+
+## 🧱 Tech
+
+- **Expo / React Native** (mobile-first; runs on iOS, Android, and web).
+- **React Navigation** (native stack).
+- **expo-speech** for text-to-speech voice narration (degrades gracefully).
+- **AsyncStorage** for local progress + settings.
+
+## 📁 Project structure
+
+```
+App.js                       App entry: providers + loading gate
+src/
+  constants/                 Age groups, session lengths, themes, categories, disclaimer
+  theme/                     Colors, spacing, radius, typography tokens
+  data/
+    missions.js              104-mission local database + buildStory()
+  services/
+    storage.js               AsyncStorage + pure progress reducer (applySession)
+    speech.js                Text-to-speech wrapper
+    missionService.js        Filtering, randomization, session builder, AI seam
+  context/
+    SessionContext.js        Live session state + persisted progress/settings
+  components/                Buddy, BigButton, SelectCard, StatCard, Confetti, Screen, Disclaimer
+  navigation/
+    AppNavigator.js          Stack navigator
+  screens/                   The 9 screens listed above
+```
+
+### Mission data shape
+
+```js
+{
+  id: 'm001',
+  ageGroup: '1-2' | '2-3' | '3-4',
+  theme: 'jungle' | 'ocean' | 'space' | 'animals' | 'colors',
+  category: 'language' | 'motor' | 'social' | 'cognitive' | 'emotion' | 'pretend',
+  mode: 'treasure' | 'copy' | 'animal' | 'emotion' | 'story',
+  prompt: 'Can you find something BLUE?',
+  parentTip: 'Point to it together and say "blue!" slowly.',
+  celebration: 'Great looking, Explorer!',
+  options: ['Apple', 'Car', 'Star'], // Story Builder only
+}
+```
+
+Missions are plain data behind an async `getSessionMissions()` seam, so future
+**AI-generated missions** can be dropped in without touching any screen.
+
+## 🚀 Run it
+
+```bash
+npm install
+npm start            # Expo dev server (press i / a / w for iOS / Android / web)
+```
+
+## ✅ Tests
+
+Pure logic (mission selection, progress reducer, story builder, data integrity)
+is covered by Jest:
+
+```bash
+npm test
+```
+
+```
+Test Suites: 3 passed, 3 total
+Tests:       27 passed, 27 total
+```
