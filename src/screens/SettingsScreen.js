@@ -6,9 +6,11 @@ import Disclaimer from '../components/Disclaimer';
 import { colors, radius, spacing, typography } from '../theme';
 import { useSession } from '../context/SessionContext';
 import { speak } from '../services/speech';
+import { isAIConfigured } from '../services/aiConfig';
 
 export default function SettingsScreen() {
   const { settings, updateSettings, resetAllProgress } = useSession();
+  const aiReady = isAIConfigured();
 
   function confirmReset() {
     Alert.alert(
@@ -60,6 +62,23 @@ export default function SettingsScreen() {
         <Switch
           value={settings.soundEnabled}
           onValueChange={(v) => updateSettings({ soundEnabled: v })}
+          trackColor={{ true: colors.primary, false: colors.neutralDark }}
+        />
+      </View>
+
+      <View style={styles.row}>
+        <View style={styles.rowText}>
+          <Text style={styles.rowTitle}>AI missions ✨</Text>
+          <Text style={styles.rowSub}>
+            {aiReady
+              ? 'Fresh missions made just for your child'
+              : 'Set up an AI endpoint to enable (uses local missions otherwise)'}
+          </Text>
+        </View>
+        <Switch
+          value={settings.aiMissions}
+          disabled={!aiReady}
+          onValueChange={(v) => updateSettings({ aiMissions: v })}
           trackColor={{ true: colors.primary, false: colors.neutralDark }}
         />
       </View>

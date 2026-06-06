@@ -24,6 +24,7 @@ export const defaultSettings = {
   voiceEnabled: true,
   soundEnabled: true,
   childName: '',
+  aiMissions: false, // opt-in; only takes effect when an AI endpoint/key is set
 };
 
 async function readJson(key, fallback) {

@@ -6,6 +6,8 @@
  * changing any screen code.
  */
 import missions from '../data/missions';
+import { generateMissions } from './aiMissionProvider';
+import { isAIConfigured } from './aiConfig';
 
 /** Fisher–Yates shuffle returning a new array (does not mutate input). */
 export function shuffle(arr, rng = Math.random) {
@@ -62,9 +64,43 @@ export function buildSession({ ageGroup, theme, count = 5, rng = Math.random }) 
 }
 
 /**
- * Async provider seam. Today it resolves the local session synchronously.
- * Swap the body for an AI/network call later — callers already `await` it.
+ * Top up an AI-generated list to `count` using local missions, avoiding prompt
+ * duplicates. Guarantees the session is never short even if the model returned
+ * fewer (or zero) usable missions.
+ */
+export function topUpWithLocal(aiMissions, { ageGroup, theme, count, rng = Math.random }) {
+  const seenPrompts = new Set(aiMissions.map((m) => m.prompt.trim().toLowerCase()));
+  const result = [...aiMissions];
+  const local = buildSession({ ageGroup, theme, count, rng });
+  for (const mission of local) {
+    if (result.length >= count) break;
+    if (!seenPrompts.has(mission.prompt.trim().toLowerCase())) {
+      result.push(mission);
+      seenPrompts.add(mission.prompt.trim().toLowerCase());
+    }
+  }
+  return result.slice(0, count);
+}
+
+/**
+ * Provider seam. Resolves a session's missions, using AI generation when
+ * `useAI` is set AND it is configured — otherwise (or on any failure) it serves
+ * the local database. AI output is always topped up with local missions so the
+ * session reaches `count`, and any error degrades gracefully to local-only.
  */
 export async function getSessionMissions(config) {
-  return buildSession(config);
+  const { ageGroup, theme, count = 5, useAI = false } = config;
+
+  if (useAI && isAIConfigured()) {
+    try {
+      const aiMissions = await generateMissions({ ageGroup, theme, count });
+      if (aiMissions.length > 0) {
+        return topUpWithLocal(aiMissions, { ageGroup, theme, count });
+      }
+    } catch (e) {
+      // Network/config/validation problem — fall through to local missions.
+    }
+  }
+
+  return buildSession({ ageGroup, theme, count });
 }

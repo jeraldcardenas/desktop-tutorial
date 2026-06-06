@@ -11,22 +11,30 @@ import { useSession } from '../context/SessionContext';
 
 export default function ThemeSelectionScreen({ navigation, route }) {
   const { ageGroup, sessionLength } = route.params;
-  const { startSession } = useSession();
+  const { startSession, settings } = useSession();
   const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     speak('Pick an adventure!');
   }, []);
 
   async function begin() {
+    if (loading) return;
+    setLoading(true);
     const lengthCfg = SESSION_LENGTHS.find((s) => s.id === sessionLength);
-    const missions = await getSessionMissions({
-      ageGroup,
-      theme: selected,
-      count: lengthCfg ? lengthCfg.missions : 5,
-    });
-    startSession({ ageGroup, sessionLength, theme: selected, missions });
-    navigation.navigate('Mission');
+    try {
+      const missions = await getSessionMissions({
+        ageGroup,
+        theme: selected,
+        count: lengthCfg ? lengthCfg.missions : 5,
+        useAI: settings.aiMissions,
+      });
+      startSession({ ageGroup, sessionLength, theme: selected, missions });
+      navigation.navigate('Mission');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -46,7 +54,12 @@ export default function ThemeSelectionScreen({ navigation, route }) {
         ))}
       </View>
 
-      <BigButton label="Let's Go!" emoji="🚀" disabled={!selected} onPress={begin} />
+      <BigButton
+        label={loading ? 'Getting ready…' : "Let's Go!"}
+        emoji="🚀"
+        disabled={!selected || loading}
+        onPress={begin}
+      />
     </Screen>
   );
 }

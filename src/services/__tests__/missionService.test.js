@@ -3,6 +3,7 @@ import {
   filterMissions,
   buildSession,
   getSessionMissions,
+  topUpWithLocal,
 } from '../missionService';
 import missions from '../../data/missions';
 
@@ -77,6 +78,53 @@ describe('getSessionMissions', () => {
   it('resolves to a built session (async provider seam)', async () => {
     const out = await getSessionMissions({ ageGroup: '1-2', theme: 'jungle', count: 3 });
     expect(out).toHaveLength(3);
+  });
+
+  it('uses local missions when AI is not requested', async () => {
+    const out = await getSessionMissions({ ageGroup: '2-3', theme: 'ocean', count: 5, useAI: false });
+    expect(out).toHaveLength(5);
+    expect(out.every((m) => m.source !== 'ai')).toBe(true);
+  });
+
+  it('falls back to local missions when AI is unconfigured even if requested', async () => {
+    // No env config in tests → isAIConfigured() is false → local path.
+    const out = await getSessionMissions({ ageGroup: '3-4', theme: 'space', count: 4, useAI: true });
+    expect(out).toHaveLength(4);
+  });
+});
+
+describe('topUpWithLocal', () => {
+  const aiMission = {
+    id: 'ai-1',
+    ageGroup: '2-3',
+    theme: 'ocean',
+    category: 'motor',
+    mode: 'copy',
+    prompt: 'Wiggle like a jellyfish!',
+    parentTip: 'Wiggle together.',
+    celebration: 'Wiggly!',
+    source: 'ai',
+  };
+
+  it('keeps AI missions first and fills the rest from local', () => {
+    const out = topUpWithLocal([aiMission], { ageGroup: '2-3', theme: 'ocean', count: 5, rng: () => 0.42 });
+    expect(out).toHaveLength(5);
+    expect(out[0]).toBe(aiMission);
+    expect(out.filter((m) => m.source !== 'ai').length).toBe(4);
+  });
+
+  it('never exceeds count', () => {
+    const out = topUpWithLocal([aiMission], { ageGroup: '2-3', theme: 'ocean', count: 1 });
+    expect(out).toHaveLength(1);
+    expect(out[0]).toBe(aiMission);
+  });
+
+  it('does not add a local duplicate of an AI prompt', () => {
+    const dupPrompt = missions.find((m) => m.ageGroup === '2-3').prompt;
+    const ai = { ...aiMission, prompt: dupPrompt };
+    const out = topUpWithLocal([ai], { ageGroup: '2-3', theme: 'ocean', count: 6 });
+    const matches = out.filter((m) => m.prompt.trim().toLowerCase() === dupPrompt.trim().toLowerCase());
+    expect(matches).toHaveLength(1);
   });
 });
 

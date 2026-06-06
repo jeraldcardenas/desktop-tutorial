@@ -58,7 +58,9 @@ src/
   services/
     storage.js               AsyncStorage + pure progress reducer (applySession)
     speech.js                Text-to-speech wrapper
-    missionService.js        Filtering, randomization, session builder, AI seam
+    missionService.js        Filtering, randomization, session builder, AI + local merge
+    aiConfig.js              Resolves AI endpoint/key/model config
+    aiMissionProvider.js     Claude-backed mission generation + safety validation
   context/
     SessionContext.js        Live session state + persisted progress/settings
   components/                Buddy, BigButton, SelectCard, StatCard, Confetti, Screen, Disclaimer
@@ -83,8 +85,34 @@ src/
 }
 ```
 
-Missions are plain data behind an async `getSessionMissions()` seam, so future
-**AI-generated missions** can be dropped in without touching any screen.
+Missions are plain data behind an async `getSessionMissions()` seam, so
+**AI-generated missions** drop in without touching any screen.
+
+## ✨ AI-generated missions (optional)
+
+The app runs fully offline from the 104-mission local database. You can *also*
+let Buddy generate fresh missions with Claude:
+
+1. Copy `.env.example` → `.env` and set `EXPO_PUBLIC_TALKQUEST_AI_ENDPOINT` to
+   your backend proxy (recommended), or `EXPO_PUBLIC_TALKQUEST_AI_KEY` for local
+   dev only.
+2. Toggle **AI missions** on in the in-app Settings screen.
+
+How it works (`src/services/aiMissionProvider.js`):
+
+- Calls Claude's Messages API via a single structured tool (`emit_missions`)
+  so output already matches the mission schema.
+- A strict, kid-safety system prompt forbids any medical/diagnostic framing,
+  hazards, or scary content, and matches age-appropriate difficulty.
+- **Every** returned mission is re-validated and sanitized locally before it
+  can reach a child's screen; invalid ones are dropped.
+- Results are topped up with local missions and **always fall back to the local
+  database** on any network/config/validation error — a session is never empty
+  and never shows unvetted content.
+
+> 🔒 **Security:** an app bundle is not a secret. For production, proxy through
+> a backend that holds the API key server-side (`EXPO_PUBLIC_TALKQUEST_AI_ENDPOINT`).
+> The direct-key path is for development only.
 
 ## 🚀 Run it
 
@@ -103,6 +131,6 @@ npm test
 ```
 
 ```
-Test Suites: 3 passed, 3 total
-Tests:       27 passed, 27 total
+Test Suites: 4 passed, 4 total
+Tests:       49 passed, 49 total
 ```
