@@ -72,6 +72,10 @@ server/
   index.js                   Zero-dependency Node server (npm run server)
   serverless.js              Vercel / Netlify / Lambda adapters
   README.md                  Proxy setup & deploy guide
+api/                         Vercel functions (missions, health)
+netlify/functions/          Netlify function (missions)
+vercel.json / netlify.toml   One-command deploy configs (functions only)
+public/index.html            Proxy landing page
 ```
 
 ### Mission data shape
@@ -141,6 +145,6 @@ npm test
 ```
 
 ```
-Test Suites: 5 passed, 5 total
-Tests:       59 passed, 59 total
+Test Suites: 6 passed, 6 total
+Tests:       66 passed, 66 total
 ```

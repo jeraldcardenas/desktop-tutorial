@@ -36,23 +36,55 @@ EXPO_PUBLIC_TALKQUEST_AI_ENDPOINT=http://localhost:8787/missions
 > On a device/emulator, `localhost` refers to the device. Use your machine's LAN
 > IP (e.g. `http://192.168.1.20:8787/missions`) or a tunnel.
 
-## Deploy serverless
+## Deploy serverless (ready to go)
 
-**Vercel** — `api/missions.js`:
+The deployable files are already committed:
 
-```js
-module.exports = require('../server/serverless').vercelHandler;
+```
+api/missions.js          Vercel function  → POST /api/missions
+api/health.js            Vercel function  → GET  /api/health
+vercel.json              Deploys functions only (no Expo build)
+public/index.html        Tiny landing page
+netlify/functions/missions.js   Netlify function
+netlify.toml             Netlify config (+ /api/missions redirect)
 ```
 
-**Netlify** — `netlify/functions/missions.js`:
+### Vercel
 
-```js
-exports.handler = require('../../server/serverless').netlifyHandler;
+```bash
+npm i -g vercel              # one time
+vercel link                  # pick/create the project
+vercel env add ANTHROPIC_API_KEY production   # paste your key (also: vercel env add ... preview)
+vercel --prod                # deploy
 ```
 
-Set `ANTHROPIC_API_KEY` (and optionally `ALLOWED_ORIGIN`) in the host's
-environment settings. Then set the app's endpoint to the deployed URL, e.g.
-`https://your-app.vercel.app/api/missions`.
+Your endpoint is then `https://<project>.vercel.app/api/missions`. Verify:
+
+```bash
+curl https://<project>.vercel.app/api/health     # {"ok":true,"keyConfigured":true}
+```
+
+### Netlify
+
+```bash
+npm i -g netlify-cli         # one time
+netlify deploy --build       # follow prompts to link a site
+netlify env:set ANTHROPIC_API_KEY sk-ant-...
+netlify deploy --build --prod
+```
+
+Endpoint: `https://<site>.netlify.app/api/missions`.
+
+### Point the app at it
+
+In the project root `.env`:
+
+```
+EXPO_PUBLIC_TALKQUEST_AI_ENDPOINT=https://<your-deployment>/api/missions
+```
+
+Set `ANTHROPIC_API_KEY` (and optionally `ALLOWED_ORIGIN` to lock CORS) in the
+host's environment settings — never commit it.
 
 ## Before going to production
 

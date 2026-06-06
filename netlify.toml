@@ -1,0 +1,13 @@
+# Netlify config for the TalkQuest mission proxy.
+# Deploys the serverless function only (no Expo build).
+
+[build]
+  command = "echo 'no build — functions only'"
+  publish = "public"
+  functions = "netlify/functions"
+
+# Pretty path: /api/missions -> the function
+[[redirects]]
+  from = "/api/missions"
+  to = "/.netlify/functions/missions"
+  status = 200

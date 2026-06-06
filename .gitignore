@@ -8,3 +8,5 @@ npm-debug.*
 *.orig.*
 .env*.local
 coverage/
+.vercel/
+.netlify/
