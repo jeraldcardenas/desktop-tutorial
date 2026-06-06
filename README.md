@@ -67,6 +67,11 @@ src/
   navigation/
     AppNavigator.js          Stack navigator
   screens/                   The 9 screens listed above
+server/
+  proxy.js                   Framework-agnostic mission-proxy core (unit-tested)
+  index.js                   Zero-dependency Node server (npm run server)
+  serverless.js              Vercel / Netlify / Lambda adapters
+  README.md                  Proxy setup & deploy guide
 ```
 
 ### Mission data shape
@@ -94,9 +99,14 @@ The app runs fully offline from the 104-mission local database. You can *also*
 let Buddy generate fresh missions with Claude:
 
 1. Copy `.env.example` → `.env` and set `EXPO_PUBLIC_TALKQUEST_AI_ENDPOINT` to
-   your backend proxy (recommended), or `EXPO_PUBLIC_TALKQUEST_AI_KEY` for local
-   dev only.
+   your backend proxy (recommended — see [`server/`](server/README.md)), or
+   `EXPO_PUBLIC_TALKQUEST_AI_KEY` for local dev only.
 2. Toggle **AI missions** on in the in-app Settings screen.
+
+A ready-to-run proxy lives in [`server/`](server/README.md) — zero-dependency
+Node (`npm run server`) plus Vercel/Netlify adapters. It holds the API key
+server-side and is hardened against open-relay abuse (model allowlist, token
+cap, requires the `emit_missions` tool).
 
 How it works (`src/services/aiMissionProvider.js`):
 
@@ -131,6 +141,6 @@ npm test
 ```
 
 ```
-Test Suites: 4 passed, 4 total
-Tests:       49 passed, 49 total
+Test Suites: 5 passed, 5 total
+Tests:       59 passed, 59 total
 ```
