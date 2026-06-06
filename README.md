@@ -132,8 +132,17 @@ How it works (`src/services/aiMissionProvider.js`):
 
 ```bash
 npm install
-npm start            # Expo dev server (press i / a / w for iOS / Android / web)
+npm start            # Expo dev server — press i / a / w for iOS / Android / web
+
+# Or go straight to a target:
+npm run web          # open in a browser (no phone/simulator needed)
+npm run ios          # iOS simulator (needs Xcode)
+npm run android      # Android emulator (needs Android Studio)
 ```
+
+On a phone: install **Expo Go**, run `npm start`, and scan the QR code.
+Web support works out of the box (`react-native-web`); a production web bundle
+is produced with `npx expo export --platform web`.
 
 ## ✅ Tests
 
