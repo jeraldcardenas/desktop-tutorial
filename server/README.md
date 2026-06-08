@@ -100,6 +100,28 @@ If you want to host *just* the proxy, set `buildCommand`/`command` to a no-op an
 `outputDirectory`/`publish` to an empty folder — see git history for the
 functions-only `vercel.json`, or run the standalone Node server above.
 
+## Continuous deployment (GitHub Actions)
+
+`.github/workflows/deploy.yml` auto-deploys to Vercel on every push to the
+development branch (and `master`), but only **after `npm test` passes**.
+`.github/workflows/ci.yml` runs tests + a web build on pull requests.
+
+One-time setup — add three repo secrets (Settings → Secrets and variables →
+Actions):
+
+| Secret | Where to get it |
+|---|---|
+| `VERCEL_TOKEN` | Vercel → Account Settings → Tokens → Create |
+| `VERCEL_ORG_ID` | run `vercel link` once locally → read `.vercel/project.json` |
+| `VERCEL_PROJECT_ID` | same `.vercel/project.json` |
+
+Then set the project's env vars **in Vercel** (not in GitHub): `ANTHROPIC_API_KEY`
+and, to enable AI on the web build, `EXPO_PUBLIC_TALKQUEST_AI_ENDPOINT=/api/missions`.
+`vercel pull` brings them into the build automatically.
+
+After that, every push deploys itself — no manual `vercel --prod`. The workflow
+fails fast with a clear message if the secrets are missing.
+
 ## Before going to production
 
 This is a reference implementation. Add:
