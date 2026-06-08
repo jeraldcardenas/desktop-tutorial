@@ -74,8 +74,7 @@ server/
   README.md                  Proxy setup & deploy guide
 api/                         Vercel functions (missions, health)
 netlify/functions/          Netlify function (missions)
-vercel.json / netlify.toml   One-command deploy configs (functions only)
-public/index.html            Proxy landing page
+vercel.json / netlify.toml   One-command deploy: web app + proxy on one URL
 ```
 
 ### Mission data shape
@@ -141,8 +140,12 @@ npm run android      # Android emulator (needs Android Studio)
 ```
 
 On a phone: install **Expo Go**, run `npm start`, and scan the QR code.
-Web support works out of the box (`react-native-web`); a production web bundle
-is produced with `npx expo export --platform web`.
+Web support works out of the box (`react-native-web`); `npm run build:web`
+produces a static bundle in `dist/`.
+
+**Deploy a live URL:** `vercel --prod` (or `netlify deploy --build --prod`)
+publishes the web app *and* the mission proxy to one domain — the app then calls
+the proxy same-origin at `/api/missions`. See [`server/README.md`](server/README.md).
 
 ## ✅ Tests
 

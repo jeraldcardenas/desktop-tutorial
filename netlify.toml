@@ -1,12 +1,12 @@
-# Netlify config for the TalkQuest mission proxy.
-# Deploys the serverless function only (no Expo build).
+# Netlify config: builds the Expo web app AND deploys the mission proxy.
+# One deploy → a live URL serving the app at / and the proxy at /api/missions.
 
 [build]
-  command = "echo 'no build — functions only'"
-  publish = "public"
+  command = "npx expo export --platform web"
+  publish = "dist"
   functions = "netlify/functions"
 
-# Pretty path: /api/missions -> the function
+# Pretty path: /api/missions -> the function (place before any catch-all)
 [[redirects]]
   from = "/api/missions"
   to = "/.netlify/functions/missions"

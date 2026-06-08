@@ -36,17 +36,20 @@ EXPO_PUBLIC_TALKQUEST_AI_ENDPOINT=http://localhost:8787/missions
 > On a device/emulator, `localhost` refers to the device. Use your machine's LAN
 > IP (e.g. `http://192.168.1.20:8787/missions`) or a tunnel.
 
-## Deploy serverless (ready to go)
+## Deploy (one URL = web app + proxy)
 
-The deployable files are already committed:
+A single deploy builds the Expo **web app** and ships the **proxy functions** to
+the same domain — so you get a shareable live URL, and the app can call the
+proxy same-origin at `/api/missions` (no CORS, no API key in the client).
+
+Committed deploy files:
 
 ```
 api/missions.js          Vercel function  → POST /api/missions
 api/health.js            Vercel function  → GET  /api/health
-vercel.json              Deploys functions only (no Expo build)
-public/index.html        Tiny landing page
 netlify/functions/missions.js   Netlify function
-netlify.toml             Netlify config (+ /api/missions redirect)
+vercel.json              build: expo export web → dist/ ; serve api/*.js as functions
+netlify.toml             build: expo export web → dist/ ; functions + /api/missions redirect
 ```
 
 ### Vercel
@@ -54,11 +57,13 @@ netlify.toml             Netlify config (+ /api/missions redirect)
 ```bash
 npm i -g vercel              # one time
 vercel link                  # pick/create the project
-vercel env add ANTHROPIC_API_KEY production   # paste your key (also: vercel env add ... preview)
-vercel --prod                # deploy
+# (optional) enable AI missions on the deployed web build — same-origin:
+vercel env add EXPO_PUBLIC_TALKQUEST_AI_ENDPOINT production   # value: /api/missions
+vercel env add ANTHROPIC_API_KEY production                  # paste your Anthropic key
+vercel --prod                # builds the web app + deploys functions
 ```
 
-Your endpoint is then `https://<project>.vercel.app/api/missions`. Verify:
+Live app: `https://<project>.vercel.app/` — proxy: `https://<project>.vercel.app/api/missions`. Verify:
 
 ```bash
 curl https://<project>.vercel.app/api/health     # {"ok":true,"keyConfigured":true}
@@ -69,22 +74,31 @@ curl https://<project>.vercel.app/api/health     # {"ok":true,"keyConfigured":tr
 ```bash
 npm i -g netlify-cli         # one time
 netlify deploy --build       # follow prompts to link a site
+netlify env:set EXPO_PUBLIC_TALKQUEST_AI_ENDPOINT /api/missions   # optional, enables AI
 netlify env:set ANTHROPIC_API_KEY sk-ant-...
 netlify deploy --build --prod
 ```
 
-Endpoint: `https://<site>.netlify.app/api/missions`.
+Live app: `https://<site>.netlify.app/` — proxy: `.../api/missions`.
 
-### Point the app at it
+### Notes
 
-In the project root `.env`:
+- **The web app works without any keys** — leave the two env vars unset and you
+  get a fully playable build on the 104 local missions.
+- To **also** enable AI missions on the deployed build, set BOTH
+  `EXPO_PUBLIC_TALKQUEST_AI_ENDPOINT=/api/missions` (inlined into the web bundle
+  at build time) and `ANTHROPIC_API_KEY` (server-side), then flip the toggle in
+  Settings.
+- `EXPO_PUBLIC_TALKQUEST_AI_ENDPOINT=/api/missions` is a relative URL — it only
+  works for the web build (same origin). Native builds need an absolute URL.
+- Set `ALLOWED_ORIGIN` to lock CORS if you also call the proxy from other origins;
+  never commit `ANTHROPIC_API_KEY`.
 
-```
-EXPO_PUBLIC_TALKQUEST_AI_ENDPOINT=https://<your-deployment>/api/missions
-```
+### Proxy only (no web app)
 
-Set `ANTHROPIC_API_KEY` (and optionally `ALLOWED_ORIGIN` to lock CORS) in the
-host's environment settings — never commit it.
+If you want to host *just* the proxy, set `buildCommand`/`command` to a no-op and
+`outputDirectory`/`publish` to an empty folder — see git history for the
+functions-only `vercel.json`, or run the standalone Node server above.
 
 ## Before going to production
 
