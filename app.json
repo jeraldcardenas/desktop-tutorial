@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "TalkQuest",
+    "slug": "talkquest",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "talkquest",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#FFF6E9"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.talkquest.app"
+    },
+    "android": {
+      "package": "com.talkquest.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF6E9"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

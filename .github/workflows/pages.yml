@@ -1,0 +1,64 @@
+name: GitHub Pages
+
+# Builds the Expo web app and publishes it to GitHub Pages — a free public URL
+# with no external account or secrets (uses the repo's built-in GITHUB_TOKEN).
+# The proxy functions don't run on Pages (static hosting), so AI missions stay
+# off there; the app is fully playable on the 104 local missions.
+on:
+  push:
+    branches:
+      - claude/test-coverage-analysis-iaeBM
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy at a time.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app (with the Pages base path)
+        run: npm run build:web
+        env:
+          # e.g. "/desktop-tutorial" for a project site; "" for a user site.
+          EXPO_BASE_URL: ${{ steps.pages.outputs.base_path }}
+
+      # Serve underscore-prefixed dirs (_expo) as-is.
+      - name: Disable Jekyll
+        run: touch dist/.nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
