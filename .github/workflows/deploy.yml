@@ -2,6 +2,10 @@ name: Deploy
 
 # Auto-deploy the web app + mission proxy to Vercel on every push to the
 # development branch (and master), after tests pass. Also runnable on demand.
+#
+# If the Vercel secrets aren't configured yet, the job SKIPS gracefully (and
+# stays green) instead of failing — so it never blocks a PR. Add the secrets
+# (see server/README.md) and the very next push deploys automatically.
 on:
   push:
     branches:
@@ -21,34 +25,47 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
-      - name: Verify deploy secrets are set
+      - name: Check for Vercel secrets
+        id: secrets
         run: |
-          if [ -z "${{ secrets.VERCEL_TOKEN }}" ] || [ -z "${{ secrets.VERCEL_ORG_ID }}" ] || [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
-            echo "::error::Missing Vercel secrets. Add VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID in repo Settings → Secrets and variables → Actions."
-            exit 1
+          if [ -n "${{ secrets.VERCEL_TOKEN }}" ] && [ -n "${{ secrets.VERCEL_ORG_ID }}" ] && [ -n "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Vercel secrets not set — skipping deploy. Add VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID (see server/README.md) to enable auto-deploy."
           fi
 
-      - uses: actions/checkout@v4
+      - name: Checkout
+        if: steps.secrets.outputs.configured == 'true'
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        if: steps.secrets.outputs.configured == 'true'
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
       - name: Install dependencies
+        if: steps.secrets.outputs.configured == 'true'
         run: npm ci
 
       - name: Run tests (gate the deploy)
+        if: steps.secrets.outputs.configured == 'true'
         run: npm test
 
       - name: Install Vercel CLI
+        if: steps.secrets.outputs.configured == 'true'
         run: npm i -g vercel@latest
 
       - name: Pull Vercel project settings & env
+        if: steps.secrets.outputs.configured == 'true'
         run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Build (Expo web export + functions)
+        if: steps.secrets.outputs.configured == 'true'
         run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Deploy to production
+        if: steps.secrets.outputs.configured == 'true'
         run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
