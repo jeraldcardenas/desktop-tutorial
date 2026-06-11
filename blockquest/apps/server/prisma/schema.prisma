@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  isGuest      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  lastSeenAt   DateTime @updatedAt
+  profile      Profile?
+  inventory    InventoryItem[]
+  matchesA     Match[]  @relation("playerA")
+  matchesB     Match[]  @relation("playerB")
+}
+
+model Profile {
+  id         String @id @default(cuid())
+  userId     String @unique
+  user       User   @relation(fields: [userId], references: [id])
+  level      Int    @default(1)
+  exp        Int    @default(0)
+  coins      Int    @default(100)
+  rankPoints Int    @default(0)
+  rankTier   String @default("ROOKIE")
+  avatar     Json
+  zoneId     String @default("beginner-village")
+  posX       Int    @default(19)
+  posY       Int    @default(18)
+  wins       Int    @default(0)
+  losses     Int    @default(0)
+  totalLines Int    @default(0)
+  bestCombo  Int    @default(0)
+}
+
+model CosmeticItem {
+  id        String @id // e.g. "hair_spiky"
+  slot      String // avatar slot: hair | hairColor | top | bottom | skin
+  value     Int    // index this item unlocks for that slot
+  name      String
+  rarity    String @default("COMMON")
+  costCoins Int    @default(0)
+  owners    InventoryItem[]
+}
+
+model InventoryItem {
+  id         String       @id @default(cuid())
+  userId     String
+  itemId     String
+  equipped   Boolean      @default(false)
+  obtainedAt DateTime     @default(now())
+  user       User         @relation(fields: [userId], references: [id])
+  item       CosmeticItem @relation(fields: [itemId], references: [id])
+
+  @@unique([userId, itemId])
+}
+
+model Match {
+  id         String   @id @default(cuid())
+  mode       String // CASUAL | NPC
+  playerAId  String
+  playerBId  String?
+  npcId      String?
+  winnerId   String?
+  reason     String
+  durationS  Int
+  statsA     Json
+  statsB     Json
+  createdAt  DateTime @default(now())
+  playerA    User     @relation("playerA", fields: [playerAId], references: [id])
+  playerB    User?    @relation("playerB", fields: [playerBId], references: [id])
+}

@@ -1,0 +1,16 @@
+{
+  "name": "blockquest",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev -w @blockquest/server",
+    "dev:web": "npm run dev -w @blockquest/web",
+    "db:push": "npm run db:push -w @blockquest/server",
+    "db:seed": "npm run db:seed -w @blockquest/server",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  }
+}
