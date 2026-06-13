@@ -32,6 +32,7 @@ export class WorldScene extends Phaser.Scene {
   private remotes = new Map<string, RemoteEntity>();
   private npcs: NpcSnapshot[] = [];
   private cleanups: (() => void)[] = [];
+  private keysDown = new Set<string>();
 
   constructor() {
     super('WorldScene');
@@ -74,8 +75,21 @@ export class WorldScene extends Phaser.Scene {
       this.remotes.clear();
     });
 
-    this.input.keyboard?.on('keydown-E', () => this.interactNearby());
-    this.input.keyboard?.disableGlobalCapture();
+    // Use native DOM key events so keys work regardless of canvas focus
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (useGameStore.getState().typing) return;
+      this.keysDown.add(e.code);
+      if (e.code === 'KeyE') this.interactNearby();
+      // prevent arrow keys from scrolling the page
+      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+    };
+    const onKeyUp = (e: KeyboardEvent) => this.keysDown.delete(e.code);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    this.cleanups.push(() => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    });
 
     socket.emit('world_join');
   }
@@ -181,13 +195,10 @@ export class WorldScene extends Phaser.Scene {
     if (!this.player) return;
 
     if (!useGameStore.getState().typing && !this.moving) {
-      const kb = this.input.keyboard;
-      if (kb) {
-        for (const [code, dir] of Object.entries(KEY_TO_DIR)) {
-          if (kb.addKey(code, false).isDown) {
-            this.tryMove(dir);
-            break;
-          }
+      for (const [code, dir] of Object.entries(KEY_TO_DIR)) {
+        if (this.keysDown.has(code)) {
+          this.tryMove(dir);
+          break;
         }
       }
     }
