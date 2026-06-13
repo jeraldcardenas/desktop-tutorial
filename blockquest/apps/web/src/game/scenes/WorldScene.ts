@@ -255,7 +255,7 @@ export class WorldScene extends Phaser.Scene {
     if (useGameStore.getState().typing) return;
     for (const npc of this.npcs) {
       const dist = Math.abs(this.pos.x - npc.pos.x) + Math.abs(this.pos.y - npc.pos.y);
-      if (dist <= 2) {
+      if (dist <= 4) {
         getSocket().emit('npc_interact', { npcId: npc.id });
         return;
       }
